@@ -26,6 +26,7 @@ object Main {
         val dust = line.split(",").map(_.trim)
         fetch(dust(3)) { atom =>
           writer.println(s"${dust(0)}    ${dust(1)}    ${dust(2)}    ${atom.model}    ${atom.year}    ${atom.kms}    ${atom.cost}")
+          writer.flush()
         }
       }
     }
