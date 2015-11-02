@@ -34,6 +34,7 @@ object Utils {
       case Success(list) =>
         Some(list)
       case Failure(th) =>
+        println("Parsing Failed")
         th.printStackTrace()
         None
     }

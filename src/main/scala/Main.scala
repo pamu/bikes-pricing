@@ -25,6 +25,7 @@ object Main {
         val line = scan.nextLine();
         val dust = line.split(",").map(_.trim)
         fetch(dust(3)) { atom =>
+          println(s"writing to file: $atom")
           writer.println(s"${dust(0)}    ${dust(1)}    ${dust(2)}    ${atom.model}    ${atom.year}    ${atom.kms}    ${atom.cost.split("\\s+")(1).split(",").reduce(_ + _)}")
           writer.flush()
         }
