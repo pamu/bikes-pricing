@@ -46,6 +46,7 @@ object Main {
             println("no items")
         }
       case Failure(th) =>
+        println("fetching page failed")
         th.printStackTrace()
     }
   }
