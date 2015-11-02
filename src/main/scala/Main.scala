@@ -50,7 +50,7 @@ object Main {
 
 
   def write(filename: String)(f: PrintWriter => Unit): Unit = {
-    val writer = new PrintWriter(new File(val writer = new PrintWriter(new File(s"${System.getProperty("user.home")}/$filename.csv"))))
+    val writer = new PrintWriter(new File(s"${System.getProperty("user.home")}/$filename.csv"))
     f(writer)
     writer.flush()
     writer.close()
