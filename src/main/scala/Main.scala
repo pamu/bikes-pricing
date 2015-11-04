@@ -35,7 +35,7 @@ object Main {
             case Failure(fAtoms) =>
               fAtoms match {
                 case Not200Exception(status) =>
-                  errors.println(s"${dust(3)}    $status    status is not 200")
+                  errors.println(s"${dust(3)}    $status    ${Not200Exception.getClass}")
                   errors.flush()
                 case ex: Throwable =>
                   errors.println(s"${dust(3)}    200    ${ex.getClass}")
