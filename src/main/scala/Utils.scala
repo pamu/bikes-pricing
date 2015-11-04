@@ -14,7 +14,7 @@ case class Atom(model: String, year: String, kms: String, cost: String)
 
 object Utils {
 
-  def getPage(link: String): Future[WSResponse] = WS.client.url(link).get()
+  def getPage(link: String): Future[WSResponse] = WS.client.url(link).withFollowRedirects(true).get()
 
   def parse(html: String): Try[List[Atom]] = {
     Try {
