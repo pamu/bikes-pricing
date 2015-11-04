@@ -1,7 +1,7 @@
 import java.io.{File, PrintWriter}
 
 import scala.concurrent.Await
-import scala.util.{Failure, Success}
+import scala.util.{Try, Failure, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.concurrent.duration._
@@ -18,44 +18,68 @@ object Main {
 
     val filename = args(0)
 
-    write(filename) { writer =>
+    write(filename) { (writer, errors) =>
       import java.util.Scanner
       val scan = new Scanner(System.in)
       while(scan.hasNext) {
-        val line = scan.nextLine();
+        val line = scan.nextLine()
         val dust = line.split(",").map(_.trim)
-        fetch(dust(3)) { atom =>
-          println(s"writing to file: $atom")
-          writer.println(s"${dust(0)}    ${dust(1)}    ${dust(2)}    ${atom.model}    ${atom.year}    ${atom.kms}    ${atom.cost.split("\\s+")(1).split(",").reduce(_ + _)}")
-          writer.flush()
+        fetch(dust(3)) { tryAtoms =>
+          tryAtoms match {
+            case Success(atoms) =>
+              atoms.foreach { atom =>
+                println(s"writing to file: $atom")
+                writer.println(s"${dust(0)}    ${dust(1)}    ${dust(2)}    ${atom.model}    ${atom.year}    ${atom.kms}    ${atom.cost.split("\\s+")(1).split(",").reduce(_ + _)}")
+                writer.flush()
+              }
+            case Failure(fAtoms) =>
+              fAtoms match {
+                case Not200Exception(status) =>
+                  errors.println(s"${dust(3)}    $status    status is not 200")
+                  errors.flush()
+                case ex: Throwable =>
+                  errors.println(s"${dust(3)}    200    ${ex.getClass}")
+              }
+          }
         }
       }
     }
   }
 
-  def fetch(link: String)(process: Atom => Unit): Unit = {
+  case class Not200Exception(status: Int) extends Exception
+
+  def fetch(link: String)(result: Try[List[Atom]] => Unit): Unit = {
     val f = Utils.getPage(link)
-    Await.result(f, 1 minute)
+    Await.result(f, 3 minute)
     f onComplete {
       case Success(res) =>
         val html = res.body
-        Utils.parse(html) match {
-          case Some(list) =>
-            list.foreach(process(_))
-          case None =>
-            println("no items")
+        val statusCode = res.status
+        if (statusCode == 200) {
+            Utils.parse(html) match {
+              case Success(list) =>
+                result(Success(list))
+              case Failure(th) =>
+                result(Failure(th))
+            }
+        } else {
+          result(Failure(Not200Exception(statusCode)))
         }
       case Failure(th) =>
         println("fetching page failed")
         th.printStackTrace()
+        result(Failure(th))
     }
   }
 
 
-  def write(filename: String)(f: PrintWriter => Unit): Unit = {
+  def write(filename: String)(f: (PrintWriter, PrintWriter) => Unit): Unit = {
     val writer = new PrintWriter(new File(s"${System.getProperty("user.home")}/$filename.csv"))
-    f(writer)
+    val errors = new PrintWriter(new File(s"${System.getProperty("user.home")}/${filename}-errors.csv"))
+    f(writer, errors)
     writer.flush()
+    errors.flush()
     writer.close()
+    errors.close()
   }
 }
