@@ -14,6 +14,7 @@ object Main {
     println("Starting bikes")
     if (args.length != 1) {
       println("Please provide cmd line argument")
+      println("""usage: sbt "run <filename>" """)
     }
 
     val filename = args(0)
